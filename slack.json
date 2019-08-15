@@ -1,0 +1,17 @@
+{
+    "version": "1",
+    "actions": [
+        {
+            "type": "pull_request",
+            "channel": "#devops"
+        },
+        {
+            "type": "review_request",
+            "channel": "#devops"
+        },
+        {
+            "type": "review_status",
+            "channel": "#devops"
+        }
+    ]
+}
