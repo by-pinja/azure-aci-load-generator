@@ -3,7 +3,7 @@ Param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]
-    $Image = "mcr.microsoft.com/azuredocs/aci-helloworld:latest",
+    $Image = "mcr.microsoft.com/azuredocs/aci-helloworld:latestx",
 
     [Parameter()]
     [ValidateRange(1, 50)]
@@ -23,18 +23,21 @@ Param(
     [Parameter()]
     [ValidateRange(1, 16)]
     [int]
-    $MemoryGbPerGroup = 4
+    $MemoryGbPerGroup = 4,
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $Location = "northeurope"
 )
 
-# $resourceGroup = "load-generator-$([System.Guid]::NewGuid())"
-$runId = [System.Guid]::NewGuid().ToString().Replace("-","")
-$resourceGroup = "load-generator-dev"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+$PSDefaultParameterValues['*:ErrorAction'] = 'Stop'
+
+$runId = [System.Guid]::NewGuid().ToString().Replace("-", "")
+$resourceGroup = "load-generator-$($runId)"
 $imageTemporaryName = "load-generator-image-$($runId)"
-
-$passwordForRegistry = [System.Guid]::NewGuid()
-
-$registryPassword = ConvertTo-SecureString $passwordForRegistry -AsPlainText -Force
-$credsForRegistry = New-Object System.Management.Automation.PSCredential ("myacr", $registryPassword)
 
 function RunArm([string] $file, $parameters) {
     $file = Resolve-Path $file
@@ -62,7 +65,22 @@ function RunArm([string] $file, $parameters) {
     }
 }
 
-New-AzResourceGroup -Name $resourceGroup -Location "northeurope"
+if (-not (Get-Command Connect-AzAccount -errorAction SilentlyContinue)) {
+    throw "Az powershell module not installed / or not imported. Check https://docs.microsoft.com/en-us/powershell/azure/install-az-ps"
+}
+
+if (-not (Get-Command docker -errorAction SilentlyContinue)) {
+    throw "Docker not installed or not available in PATH."
+}
+
+$imageExists = docker images -q $Image
+
+if (-not $imageExists) {
+    throw "Could not find image $Image from local cache. If you are trying to use public image first run 'docker pull $Image'. If using locally built image check images with 'docker images'"
+}
+
+Write-Host "Creating resource group $resourceGroup"
+New-AzResourceGroup -Name $resourceGroup -Location $Location | Out-Null
 
 $adhocRegistry = New-AzContainerRegistry -ResourceGroupName $resourceGroup -Name "acr$($runId)" -EnableAdminUser -Sku Basic
 $creds = Get-AzContainerRegistryCredential -Registry $adhocRegistry
@@ -81,10 +99,10 @@ docker logout $adhocRegistry.LoginServer
 # Multiple containers are very usefull since it helps to optimize load generator per
 # group. For example in case of selenium even 1CPU/1GB is overkill and it can run multiple instances concurrently.
 RunArm (Resolve-Path $PSScriptRoot/arm/container-group.json) -parameters @{
-    groupIndex = @{ value = 1 };
-    containerCount = @{ value = 2 };
-    containerImage = @{ value = $fullTemporaryImageName };
-    registryServer = @{ value = $adhocRegistry.LoginServer };
+    groupIndex       = @{ value = 1 };
+    containerCount   = @{ value = 2 };
+    containerImage   = @{ value = $fullTemporaryImageName };
+    registryServer   = @{ value = $adhocRegistry.LoginServer };
     registryUsername = @{ value = $creds.Username };
     registryPassword = @{ value = $creds.Password };
 }
