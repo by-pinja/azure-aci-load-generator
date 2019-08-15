@@ -19,6 +19,12 @@
         },
         "registryPassword": {
             "type": "string"
+        },
+        "cpus": {
+            "type": "int"
+        },
+        "memoryGb": {
+            "type": "int"
         }
     },
     "variables": {
@@ -33,8 +39,8 @@
                         "image": "[parameters('containerImage')]",
                         "resources": {
                             "requests": {
-                                "cpu": 1,
-                                "memoryInGb": 2
+                                "cpu": "[parameters('cpus')]",
+                                "memoryInGb": "[parameters('memoryGb')]"
                             }
                         },
                         "ports": [

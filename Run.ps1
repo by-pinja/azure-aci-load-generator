@@ -83,9 +83,14 @@ $currentContext = Get-AzContext
 
 Write-Host "Running commands as: $($currentContext.Name)" -ForegroundColor Green
 
-if(-not $currentContext.Name)
-{
+if (-not $currentContext.Name) {
     throw "Current account not found, have you ran 'Connect-AzAccount'?"
+}
+
+$confirmation = Read-Host "Are you sure you want to create new resource group $resourceGroup in context [$($currentContext.Name), tenant: $($currentContext.Tenant)] and start load? [y/n]"
+
+if ($confirmation.ToLower() -ne "y") {
+    exit
 }
 
 Write-Host "Creating resource group $resourceGroup"
@@ -101,17 +106,23 @@ docker tag $Image $fullTemporaryImageName
 docker push $fullTemporaryImageName
 docker logout $adhocRegistry.LoginServer
 
-# These are actually simpler to deploy with command line commands
-# without arm. However currently container groups doesn't support
-# multiple container images without ARM templates and for this reason
-# all parts are deployed using same routine.
-# Multiple containers are very usefull since it helps to optimize load generator per
-# group. For example in case of selenium even 1CPU/1GB is overkill and it can run multiple instances concurrently.
-RunArm (Resolve-Path $PSScriptRoot/arm/container-group.json) -parameters @{
-    groupIndex       = @{ value = 1 };
-    containerCount   = @{ value = 2 };
-    containerImage   = @{ value = $fullTemporaryImageName };
-    registryServer   = @{ value = $adhocRegistry.LoginServer };
-    registryUsername = @{ value = $creds.Username };
-    registryPassword = @{ value = $creds.Password };
+foreach ($groupIndex in 1..$Groups) {
+    Write-Host "Creating container group $groupIndex of $Groups"
+
+    # These are actually simpler to deploy with command line commands
+    # without arm. However currently container groups doesn't support
+    # multiple container images without ARM templates and for this reason
+    # all parts are deployed using same routine.
+    # Multiple containers are very usefull since it helps to optimize load generator per
+    # group. For example in case of selenium even 1CPU/1GB is overkill and it can run multiple instances concurrently.
+    RunArm (Resolve-Path $PSScriptRoot/arm/container-group.json) -parameters @{
+        groupIndex       = @{ value = $groupIndex };
+        containerCount   = @{ value = $ContainerPerGroup };
+        containerImage   = @{ value = $fullTemporaryImageName };
+        registryServer   = @{ value = $adhocRegistry.LoginServer };
+        registryUsername = @{ value = $creds.Username };
+        registryPassword = @{ value = $creds.Password };
+        cpus = @{ value = $CpusPerGroup };
+        memoryGb = @{ value = $MemoryGbPerGroup };
+    } | Out-Null
 }
