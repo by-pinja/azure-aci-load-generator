@@ -3,7 +3,7 @@ Param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]
-    $Image = "mcr.microsoft.com/azuredocs/aci-helloworld:latestx",
+    $Image = "mcr.microsoft.com/azuredocs/aci-helloworld:latest",
 
     [Parameter()]
     [ValidateRange(1, 50)]
@@ -77,6 +77,15 @@ $imageExists = docker images -q $Image
 
 if (-not $imageExists) {
     throw "Could not find image $Image from local cache. If you are trying to use public image first run 'docker pull $Image'. If using locally built image check images with 'docker images'"
+}
+
+$currentContext = Get-AzContext
+
+Write-Host "Running commands as: $($currentContext.Name)" -ForegroundColor Green
+
+if(-not $currentContext.Name)
+{
+    throw "Current account not found, have you ran 'Connect-AzAccount'?"
 }
 
 Write-Host "Creating resource group $resourceGroup"
