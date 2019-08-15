@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "variables": {
+        "acrSku": "Basic",
+        "acrName": "[concat('loag-generator-adhoc-acr-', uniqueString(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "name": "[variables('acrName')]",
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2017-10-01",
+            "location": "[resourceGroup().location]",
+            "comments": "Container registry for storing docker images",
+            "tags": {
+                "displayName": "Container Registry",
+                "container.registry": "[variables('acrName')]"
+            },
+            "sku": {
+                "name": "[variables('acrSku')]",
+                "tier": "[variables('acrSku')]"
+            },
+            "properties": {
+                "adminUserEnabled": true
+            }
+        }
+    ],
+    "outputs": {
+        "acrUrl": {
+            "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries',variables('acrName'))).loginServer]",
+            "type": "string"
+        },
+        "acrUsername": {
+            "value": "[variables('acrName')]",
+            "type": "string"
+        },
+        "acrPassword": {
+            "value": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries',variables('acrName')),'2017-03-01').passwords[0].value]",
+            "type": "string"
+        }
+    }
+}

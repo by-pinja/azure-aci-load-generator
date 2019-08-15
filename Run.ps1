@@ -1,23 +1,40 @@
 [CmdLetBinding()]
-Param()
+Param(
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $Image = "mcr.microsoft.com/azuredocs/aci-helloworld:latest",
 
-$resourceGroup = "load-generator-$([System.Guid]::NewGuid())"
+    [Parameter()]
+    [ValidateRange(1, 50)]
+    [int]
+    $Groups = 2,
+
+    [Parameter()]
+    [ValidateRange(1, 50)]
+    [int]
+    $ContainerPerGroup = 1,
+
+    [Parameter()]
+    [ValidateRange(1, 4)]
+    [int]
+    $CpusPerGroup = 2,
+
+    [Parameter()]
+    [ValidateRange(1, 16)]
+    [int]
+    $MemoryGbPerGroup = 4
+)
+
+# $resourceGroup = "load-generator-$([System.Guid]::NewGuid())"
+$runId = [System.Guid]::NewGuid().ToString().Replace("-","")
+$resourceGroup = "load-generator-dev"
+$imageTemporaryName = "load-generator-image-$($runId)"
 
 $passwordForRegistry = [System.Guid]::NewGuid()
 
 $registryPassword = ConvertTo-SecureString $passwordForRegistry -AsPlainText -Force
 $credsForRegistry = New-Object System.Management.Automation.PSCredential ("myacr", $registryPassword)
-
-function CreateResourceGroup {
-    $resourceGroupArm = Resolve-Path "$PSScriptRoot/arm/resource-group.json"
-    $resourceGroupParameters = @{ groupName = $resourceGroup }
-
-    New-AzDeployment `
-        -Name ([System.IO.Path]::GetFileName($resourceGroupArm)) `
-        -TemplateFile $resourceGroupArm `
-        -Location "northeurope" `
-        -TemplateParameterObject $resourceGroupParameters | Out-Null
-}
 
 function RunArm([string] $file, $parameters) {
     $file = Resolve-Path $file
@@ -45,5 +62,29 @@ function RunArm([string] $file, $parameters) {
     }
 }
 
-CreateResourceGroup
-RunArm (Resolve-Path $PSScriptRoot/arm/container-group.json)
+New-AzResourceGroup -Name $resourceGroup -Location "northeurope"
+
+$adhocRegistry = New-AzContainerRegistry -ResourceGroupName $resourceGroup -Name "acr$($runId)" -EnableAdminUser -Sku Basic
+$creds = Get-AzContainerRegistryCredential -Registry $adhocRegistry
+$creds.Password | docker login $adhocRegistry.LoginServer -u $creds.Username --password-stdin
+
+$fullTemporaryImageName = "$($adhocRegistry.LoginServer)/$imageTemporaryName"
+
+docker tag $Image $fullTemporaryImageName
+docker push $fullTemporaryImageName
+docker logout $adhocRegistry.LoginServer
+
+# These are actually simpler to deploy with command line commands
+# without arm. However currently container groups doesn't support
+# multiple container images without ARM templates and for this reason
+# all parts are deployed using same routine.
+# Multiple containers are very usefull since it helps to optimize load generator per
+# group. For example in case of selenium even 1CPU/1GB is overkill and it can run multiple instances concurrently.
+RunArm (Resolve-Path $PSScriptRoot/arm/container-group.json) -parameters @{
+    groupIndex = @{ value = 1 };
+    containerCount = @{ value = 2 };
+    containerImage = @{ value = $fullTemporaryImageName };
+    registryServer = @{ value = $adhocRegistry.LoginServer };
+    registryUsername = @{ value = $creds.Username };
+    registryPassword = @{ value = $creds.Password };
+}

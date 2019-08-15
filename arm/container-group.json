@@ -2,82 +2,83 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-      "containerGroupName": {
-        "type": "string",
-        "defaultValue": "myContainerGroup",
-        "metadata": {
-          "description": "Container Group name."
+        "groupIndex": {
+            "type": "int"
+        },
+        "containerCount": {
+            "type": "int"
+        },
+        "containerImage": {
+            "type": "string"
+        },
+        "registryServer": {
+            "type": "string"
+        },
+        "registryUsername": {
+            "type": "string"
+        },
+        "registryPassword": {
+            "type": "string"
         }
-      }
     },
     "variables": {
-      "container1name": "aci-tutorial-app",
-      "container1image": "mcr.microsoft.com/azuredocs/aci-helloworld:latest",
-      "container2name": "aci-tutorial-sidecar",
-      "container2image": "mcr.microsoft.com/azuredocs/aci-tutorial-sidecar"
+        "containerGroupName": "[concat('load-generator-', parameters('groupIndex'))]",
+        "copy": [
+            {
+                "name": "containers",
+                "count": "[parameters('containerCount')]",
+                "input": {
+                    "name": "[concat('container', copyIndex('containers'))]",
+                    "properties": {
+                        "image": "[parameters('containerImage')]",
+                        "resources": {
+                            "requests": {
+                                "cpu": 1,
+                                "memoryInGb": 2
+                            }
+                        },
+                        "ports": [
+                            {
+                                "port": "[add(copyIndex('containers'), 80)]"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
     },
     "resources": [
-      {
-        "name": "[parameters('containerGroupName')]",
-        "type": "Microsoft.ContainerInstance/containerGroups",
-        "apiVersion": "2018-10-01",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "containers": [
-            {
-              "name": "[variables('container1name')]",
-              "properties": {
-                "image": "[variables('container1image')]",
-                "resources": {
-                  "requests": {
-                    "cpu": 1,
-                    "memoryInGb": 1.5
-                  }
+        {
+            "name": "[variables('containerGroupName')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-10-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "containers": "[variables('containers')]",
+                "osType": "Linux",
+                "ipAddress": {
+                    "type": "Public",
+                    "ports": [
+                        {
+                            "protocol": "tcp",
+                            "port": "80"
+                        }
+                    ]
                 },
-                "ports": [
-                  {
-                    "port": 80
-                  },
-                  {
-                    "port": 8080
-                  }
+                "imageRegistryCredentials": [
+                    {
+                        "server": "[parameters('registryServer')]",
+                        "username": "[parameters('registryUsername')]",
+                        "password": "[parameters('registryPassword')]"
+                    }
                 ]
-              }
-            },
-            {
-              "name": "[variables('container2name')]",
-              "properties": {
-                "image": "[variables('container2image')]",
-                "resources": {
-                  "requests": {
-                    "cpu": 1,
-                    "memoryInGb": 1.5
-                  }
-                }
-              }
             }
-          ],
-          "osType": "Linux",
-          "ipAddress": {
-            "type": "Public",
-            "ports": [
-              {
-                "protocol": "tcp",
-                "port": "80"
-              },
-              {
-                  "protocol": "tcp",
-                  "port": "8080"
-              }
-            ]
-          }
         }
-      }
     ],
     "outputs": {
-      "containerIPv4Address": {
-        "type": "string",
-        "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerGroupName'))).ipAddress.ip]"
-      }
+        "containerIPv4Address": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', variables('containerGroupName'))).ipAddress.ip]"
+        }
     }
-  }
+}
