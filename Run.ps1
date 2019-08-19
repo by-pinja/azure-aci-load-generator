@@ -3,7 +3,7 @@ Param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]
-    $Image = "mcr.microsoft.com/azuredocs/aci-helloworld:latest",
+    $Image = "foo",
 
     [Parameter()]
     [ValidateRange(1, 50)]

@@ -62,6 +62,7 @@
             "properties": {
                 "containers": "[variables('containers')]",
                 "osType": "Linux",
+                "restartPolicy": "Always",
                 "ipAddress": {
                     "type": "Public",
                     "ports": [
