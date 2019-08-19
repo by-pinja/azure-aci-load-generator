@@ -8,12 +8,12 @@ Param(
     [Parameter()]
     [ValidateRange(1, 50)]
     [int]
-    $Groups = 2,
+    $Groups = 1,
 
     [Parameter()]
     [ValidateRange(1, 50)]
     [int]
-    $ContainerPerGroup = 1,
+    $ContainerPerGroup = 4,
 
     [Parameter()]
     [ValidateRange(1, 4)]
@@ -96,15 +96,21 @@ if ($confirmation.ToLower() -ne "y") {
 Write-Host "Creating resource group $resourceGroup"
 New-AzResourceGroup -Name $resourceGroup -Location $Location | Out-Null
 
+Write-Host "Uploading image '$Image' to temporary container registry from local computer."
+
 $adhocRegistry = New-AzContainerRegistry -ResourceGroupName $resourceGroup -Name "acr$($runId)" -EnableAdminUser -Sku Basic
 $creds = Get-AzContainerRegistryCredential -Registry $adhocRegistry
 $creds.Password | docker login $adhocRegistry.LoginServer -u $creds.Username --password-stdin
 
 $fullTemporaryImageName = "$($adhocRegistry.LoginServer)/$imageTemporaryName"
 
+Write-Host "Pushing image '$Image' from local cache."
+
 docker tag $Image $fullTemporaryImageName
 docker push $fullTemporaryImageName
 docker logout $adhocRegistry.LoginServer
+
+Write-Host "Creating $Groups groups with $ContainerPerGroup containers running load in each. This totals $($Groups*$ContainerPerGroup) agents total."
 
 foreach ($groupIndex in 1..$Groups) {
     Write-Host "Creating container group $groupIndex of $Groups"
