@@ -8,22 +8,22 @@ Param(
     [Parameter()]
     [ValidateRange(1, 50)]
     [int]
-    $Groups = 1,
+    $Groups = 5,
 
     [Parameter()]
     [ValidateRange(1, 50)]
     [int]
-    $ContainerPerGroup = 4,
+    $ContainerPerGroup = 1,
 
     [Parameter()]
     [ValidateRange(1, 4)]
     [int]
-    $CpusPerGroup = 2,
+    $CpusPerContainer = 1,
 
     [Parameter()]
     [ValidateRange(1, 16)]
     [int]
-    $MemoryGbPerGroup = 4,
+    $MemoryPerContainerGb = 1,
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]
@@ -87,6 +87,14 @@ if (-not $currentContext.Name) {
     throw "Current account not found, have you ran 'Connect-AzAccount'?"
 }
 
+if ($ContainerPerGroup * $CpusPerContainer -gt 4) {
+    throw "Total CPU:s in group can be maximum of 4. Total per group is container count * cpu:s. See more information from https://docs.microsoft.com/en-us/azure/container-instances/container-instances-region-availability"
+}
+
+if ($ContainerPerGroup * $CpusPerContainer -gt 16) {
+    throw "Total memory in group can be maximum of 16GB. Total per group is container count * memory. See more information from https://docs.microsoft.com/en-us/azure/container-instances/container-instances-region-availability"
+}
+
 $confirmation = Read-Host "Are you sure you want to create new resource group $resourceGroup in context [$($currentContext.Name), tenant: $($currentContext.Tenant)] and start load? [y/n]"
 
 if ($confirmation.ToLower() -ne "y") {
@@ -128,7 +136,7 @@ foreach ($groupIndex in 1..$Groups) {
         registryServer   = @{ value = $adhocRegistry.LoginServer };
         registryUsername = @{ value = $creds.Username };
         registryPassword = @{ value = $creds.Password };
-        cpus = @{ value = $CpusPerGroup };
-        memoryGb = @{ value = $MemoryGbPerGroup };
+        cpus             = @{ value = $CpusPerContainer };
+        memoryGb         = @{ value = $MemoryPerContainerGb };
     } | Out-Null
 }
