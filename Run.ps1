@@ -1,14 +1,14 @@
 [CmdLetBinding()]
 Param(
-    [Parameter()]
+    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]
-    $Image = "foo",
+    $Image,
 
     [Parameter()]
     [ValidateRange(1, 50)]
     [int]
-    $Groups = 5,
+    $Groups = 1,
 
     [Parameter()]
     [ValidateRange(1, 50)]
