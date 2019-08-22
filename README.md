@@ -20,11 +20,33 @@ theres enough data in system.
 
 ## Setup environment and depencies
 
-todo
+Should be executable with Windows, Mac and Linux with following depencies installed:
+
+- [Powershell 6.2+](https://github.com/PowerShell/PowerShell)
+- Docker [Windows](https://docs.docker.com/docker-for-windows/)/[Linux](https://docs.docker.com/install/linux/docker-ce/ubuntu/)/[Mac](https://docs.docker.com/docker-for-mac/install/)
+- [Az powershell module](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps)
 
 ## Example
 
-todo
+Create suitable docker image for load generator (this repository contains few examples, we use cypress image here.)
+
+```powershell
+docker build ./example/ -t cypress-load
+```
+
+Login to azure and run tool
+
+:heavy_exclamation_mark: Make sure your subscription and tenant is correct so that script will create resources to correct location!
+
+```powershell
+Connect-AzAccount
+./Run.ps1 -Image "cypress-load" -TTLInMinutes 30 -Groups 3 -ContainerPerGroup 3
+```
+
+Now you have array of `cypress-load` containers generating load that lives for 30 minutes.
+
+![alt text](./img/generated-resources.png "Created resources that executes load")
+
 
 ## Results
 
