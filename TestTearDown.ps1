@@ -1,8 +1,7 @@
 $resourceGroup = "load-generator-tear-down-test"
 $Location = "northeurope"
 
-New-AzResourceGroup -Name $resourceGroup -Location $Location -Tag @{Created=([datetime]::UtcNow.ToString("o")); TTLMinutes=(5)} | Out-Null
-
+#New-AzResourceGroup -Name $resourceGroup -Location $Location -Tag @{Created=([datetime]::UtcNow.ToString("o")); TTLMinutes=(5)} | Out-Null
 
 function RunArm([string] $file, $parameters) {
     $file = Resolve-Path $file
