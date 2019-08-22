@@ -1,13 +1,10 @@
 # Input bindings are passed in via param block.
 param($Timer)
 
-# Get the current universal time in the default string format
-$currentUTCtime = (Get-Date).ToUniversalTime()
+$resourceGroup = Get-AzResourceGroup -Name "load-generator-tear-down-test"
 
-# The 'IsPastDue' porperty is 'true' when the current function invocation is later than scheduled.
-if ($Timer.IsPastDue) {
-    Write-Host "PowerShell timer is running late!"
+function [bool]IsTTLOver{ [datetime]::Parse($resourceGroup.Tags.Created).AddMinutes($resourceGroup.Tags.TTLMinutes).ToUniversalTime() -gt [datetime]::UtcNow }
+
+if (IsTTLOver) {
+    Write-Host "Delete it now."
 }
-
-# Write an information log with the current time.
-Write-Host "PowerShell timer trigger function ran! TIME: $currentUTCtime"

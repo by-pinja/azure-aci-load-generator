@@ -101,10 +101,10 @@ if ($confirmation.ToLower() -ne "y") {
     exit
 }
 
-Write-Host "Creating resource group $resourceGroup"
+Write-Host "Creating resource group $resourceGroup" -ForegroundColor Green
 New-AzResourceGroup -Name $resourceGroup -Location $Location | Out-Null
 
-Write-Host "Uploading image '$Image' to temporary container registry from local computer."
+Write-Host "Uploading image '$Image' to temporary container registry from local computer." -ForegroundColor Green
 
 $adhocRegistry = New-AzContainerRegistry -ResourceGroupName $resourceGroup -Name "acr$($runId)" -EnableAdminUser -Sku Basic
 $creds = Get-AzContainerRegistryCredential -Registry $adhocRegistry
@@ -112,13 +112,13 @@ $creds.Password | docker login $adhocRegistry.LoginServer -u $creds.Username --p
 
 $fullTemporaryImageName = "$($adhocRegistry.LoginServer)/$imageTemporaryName"
 
-Write-Host "Pushing image '$Image' from local cache."
+Write-Host "Pushing image '$Image' from local cache." -ForegroundColor Green
 
 docker tag $Image $fullTemporaryImageName
 docker push $fullTemporaryImageName
 docker logout $adhocRegistry.LoginServer
 
-Write-Host "Creating $Groups groups with $ContainerPerGroup containers running load in each. This totals $($Groups*$ContainerPerGroup) agents total."
+Write-Host "Creating $Groups groups with $ContainerPerGroup containers running load in each. This totals $($Groups*$ContainerPerGroup) agents total." -ForegroundColor Green
 
 foreach ($groupIndex in 1..$Groups) {
     Write-Host "Creating container group $groupIndex of $Groups"
