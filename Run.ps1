@@ -6,6 +6,11 @@ Param(
     $Image,
 
     [Parameter()]
+    [ValidateRange(5, 60*6)]
+    [int]
+    $TTLInMinutes = 30,
+
+    [Parameter()]
     [ValidateRange(1, 50)]
     [int]
     $Groups = 1,
@@ -73,10 +78,14 @@ if (-not (Get-Command docker -errorAction SilentlyContinue)) {
     throw "Docker not installed or not available in PATH."
 }
 
-$imageExists = docker images -q $Image
+$imageId = docker images -q $Image
 
-if (-not $imageExists) {
+if (-not $imageId) {
     throw "Could not find image $Image from local cache. If you are trying to use public image first run 'docker pull $Image'. If using locally built image check images with 'docker images'"
+}
+
+if($imageId -is [array]) {
+    throw "Find more than one local image matching $Image, add correct tag for image and try again."
 }
 
 $currentContext = Get-AzContext
@@ -102,7 +111,20 @@ if ($confirmation.ToLower() -ne "y") {
 }
 
 Write-Host "Creating resource group $resourceGroup" -ForegroundColor Green
-New-AzResourceGroup -Name $resourceGroup -Location $Location | Out-Null
+
+New-AzResourceGroup -Name $resourceGroup -Location $Location -Tag @{Created=([datetime]::UtcNow.ToString("o")); TTLMinutes=($TTLInMinutes)} | Out-Null
+
+Write-Host "Creating automatic tear down function for resource group, triggers after $TTLInMinutes minutes (TTLInMinutes)." -ForegroundColor Green
+
+$functionAppOutputs = RunArm (Resolve-Path $PSScriptRoot/arm/function-app.json)
+New-AzRoleAssignment -ObjectId $functionAppOutputs.Outputs.principalId.Value -RoleDefinitionName "Contributor" -Scope "/subscriptions/$($functionAppOutputs.Outputs.subscriptionId.Value)/resourceGroups/$resourceGroup/" | Out-Null
+
+$temporaryFolderForZip = Join-Path ([System.IO.Path]::GetTempPath()) -ChildPath ([Guid]::NewGuid())
+Copy-Item ./functions/ $temporaryFolderForZip -Recurse -Force | Out-Null
+Remove-Item $temporaryFolderForZip/local.settings.json -Recurse -Force | Out-Null
+
+Compress-Archive -Path $temporaryFolderForZip/* -DestinationPath $PSScriptRoot/functions.deployment.zip -Force | Out-Null
+Publish-AzWebApp -ResourceGroupName $resourceGroup -Name $functionAppOutputs.Outputs.appName.Value -ArchivePath $PSScriptRoot/functions.deployment.zip -Force | Out-Null
 
 Write-Host "Uploading image '$Image' to temporary container registry from local computer." -ForegroundColor Green
 
@@ -112,9 +134,9 @@ $creds.Password | docker login $adhocRegistry.LoginServer -u $creds.Username --p
 
 $fullTemporaryImageName = "$($adhocRegistry.LoginServer)/$imageTemporaryName"
 
-Write-Host "Pushing image '$Image' from local cache." -ForegroundColor Green
+Write-Host "Pushing image '$Image' ($imageId) from local cache." -ForegroundColor Green
 
-docker tag $Image $fullTemporaryImageName
+docker tag $imageId $fullTemporaryImageName
 docker push $fullTemporaryImageName
 docker logout $adhocRegistry.LoginServer
 

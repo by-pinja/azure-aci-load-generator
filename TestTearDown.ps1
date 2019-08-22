@@ -30,13 +30,11 @@ function RunArm([string] $file, $parameters) {
 }
 
 $functionAppOutputs = RunArm (Resolve-Path $PSScriptRoot/arm/function-app.json)
-
 New-AzRoleAssignment -ObjectId $functionAppOutputs.Outputs.principalId.Value -RoleDefinitionName "Contributor" -Scope "/subscriptions/$($functionAppOutputs.Outputs.subscriptionId.Value)/resourceGroups/$resourceGroup/"
 
 $temporaryFolderForZip = Join-Path ([System.IO.Path]::GetTempPath()) -ChildPath ([Guid]::NewGuid())
 Copy-Item ./functions/ $temporaryFolderForZip -Recurse -Force
 Remove-Item $temporaryFolderForZip/local.settings.json -Recurse -Force
-Remove-Item $temporaryFolderForZip/.vscode/ -Recurse -Force
 
 Compress-Archive -Path $temporaryFolderForZip/* -DestinationPath $PSScriptRoot/functions.deployment.zip -Force
 Publish-AzWebApp -ResourceGroupName "load-generator-tear-down-test" -Name "functions-nykr665cektgo" -ArchivePath $PSScriptRoot/functions.deployment.zip -Force

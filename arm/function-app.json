@@ -117,6 +117,10 @@
         "subscriptionId": {
             "type": "string",
             "value": "[subscription().subscriptionid]"
+        },
+        "appName": {
+            "type": "string",
+            "value": "[variables('functionAppName')]"
         }
     }
   }
