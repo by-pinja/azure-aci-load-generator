@@ -26,6 +26,12 @@ Should be executable with Windows, Mac and Linux with following dependencies ins
 - Docker [Windows](https://docs.docker.com/docker-for-windows/)/[Linux](https://docs.docker.com/install/linux/docker-ce/ubuntu/)/[Mac](https://docs.docker.com/docker-for-mac/install/)
 - [Az powershell module](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps)
 
+To get examples and parameter descriptions from tool call
+
+```powershell
+Get-Help ./Run.ps1 -Full
+```
+
 ## Example
 
 Create suitable docker image for load generator (this repository contains few examples, we use cypress image here.)
