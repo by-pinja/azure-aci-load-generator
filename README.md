@@ -15,7 +15,7 @@ of resources since they run browser on background. This problem can be
 worked around to spawn a lot of concurrent instances in ACI.
 
 If you spawn array for longer period of time, this tool can also be used
-to generate data to target instance. Commonly issues starts to arise when
+to generate data to target instance. Commonly issues start to arise when
 there's enough data in system.
 
 ## Setup environment and dependencies
