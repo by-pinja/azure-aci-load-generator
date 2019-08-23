@@ -8,7 +8,7 @@ Creates array of containers to generate load with Azure ACI.
 When creating load tests you need docker, powershell 6.2+ and powershell AZ installed.
 See examples and documentation how tool can be used.
 
-Please don't run this on production Azure environment: script contain tear-down functionalities
+Please don't run this on production Azure environment: script contains tear-down functionalities
 that remove resources automatically. There should be no risk anything else will be removed but
 authors of this tools will not take any responsibility if you run it on production environment.
 
@@ -43,24 +43,24 @@ Param(
     $TTLInMinutes = 60,
 
     # Test setup is built from two parts: groups and containers. Group can host multiple
-    # containers. If kubernetes is familiar this concept is identical with 'pods'.
-    # For example 3 groups with 3 containers makes 9 running container total.
-    # This is divided because theres limits how many groups and containers can be used.
-    # Theres total 100 group in subscription limit in azure.
+    # containers. This concept is similar to Kubernetes 'pods'.
+    # For example 3 groups with 3 containers makes 9 running containers in total.
+    # This is divided because there's limits how many groups and containers can be used.
+    # There's total 100 group in subscription limit in azure.
     [Parameter()]
     [ValidateRange(1, 50)]
     [int]
     $Groups = 1,
 
-    # How many containers each group will run. Container share certain resources
+    # How many containers each group will run. Containers share certain resources
     # similar to containers in 'pods' at kubernetes.
-    # Each group can have up to 60 containers which is hard limit for azure.
+    # Each group can have up to 60 containers which is the hard limit for Azure.
     [Parameter()]
     [ValidateRange(1, 60)]
     [int]
     $ContainerPerGroup = 1,
 
-    # CPU per container. Its important to notice that total capacity neededed for group
+    # CPU per container. It's important to notice that the total capacity neededed for group
     # is calculated container_count*cpu. For example 3 containers with 1 cpu = 3 cpus.
     # See exact limits https://docs.microsoft.com/bs-latn-ba/azure/container-instances/container-instances-region-availability?view=azuremgmtcdn-fluent-1.0.0#availability---general
     [Parameter()]
@@ -68,7 +68,7 @@ Param(
     [int]
     $CpusPerContainer = 1,
 
-    # Memory per container. Its important to notice that total capacity neededed for group
+    # Memory per container. It's important to notice that the total capacity neededed for group
     # is calculated container_count*memory. For example 3 containers with 1 GB each = 3 GB.
     # See exact limits https://docs.microsoft.com/bs-latn-ba/azure/container-instances/container-instances-region-availability?view=azuremgmtcdn-fluent-1.0.0#availability---general
     [Parameter()]
