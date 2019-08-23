@@ -209,3 +209,5 @@ foreach ($groupIndex in 1..$Groups) {
         memoryGb         = @{ value = $MemoryPerContainerGb };
     } | Out-Null
 }
+
+Write-Host "Load generator is running on resource group $resourceGroup, see created resources with 'Get-AzResource -ResourceGroupName $resourceGroup'" -ForegroundColor Green
