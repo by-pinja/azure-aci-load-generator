@@ -1,0 +1,91 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "groupIndex": {
+            "type": "int"
+        },
+        "containerCount": {
+            "type": "int"
+        },
+        "containerImage": {
+            "type": "string"
+        },
+        "registryServer": {
+            "type": "string"
+        },
+        "registryUsername": {
+            "type": "string"
+        },
+        "registryPassword": {
+            "type": "string"
+        },
+        "cpus": {
+            "type": "int"
+        },
+        "memoryGb": {
+            "type": "int"
+        }
+    },
+    "variables": {
+        "containerGroupName": "[concat('load-generator-', parameters('groupIndex'))]",
+        "copy": [
+            {
+                "name": "containers",
+                "count": "[parameters('containerCount')]",
+                "input": {
+                    "name": "[concat('container', copyIndex('containers'))]",
+                    "properties": {
+                        "image": "[parameters('containerImage')]",
+                        "resources": {
+                            "requests": {
+                                "cpu": "[parameters('cpus')]",
+                                "memoryInGb": "[parameters('memoryGb')]"
+                            }
+                        },
+                        "ports": [
+                            {
+                                "port": "[add(copyIndex('containers'), 80)]"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "resources": [
+        {
+            "name": "[variables('containerGroupName')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-10-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "containers": "[variables('containers')]",
+                "osType": "Linux",
+                "restartPolicy": "Always",
+                "ipAddress": {
+                    "type": "Public",
+                    "ports": [
+                        {
+                            "protocol": "tcp",
+                            "port": "80"
+                        }
+                    ]
+                },
+                "imageRegistryCredentials": [
+                    {
+                        "server": "[parameters('registryServer')]",
+                        "username": "[parameters('registryUsername')]",
+                        "password": "[parameters('registryPassword')]"
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "containerIPv4Address": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', variables('containerGroupName'))).ipAddress.ip]"
+        }
+    }
+}
