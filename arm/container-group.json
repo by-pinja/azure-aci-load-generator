@@ -21,12 +21,10 @@
             "type": "string"
         },
         "cpus": {
-            "type": "string",
-            "defaultValue": "0.5"
+            "type": "string"
         },
         "memoryGb": {
-            "type": "string",
-            "defaultValue": "0.5"
+            "type": "string"
         }
     },
     "variables": {
