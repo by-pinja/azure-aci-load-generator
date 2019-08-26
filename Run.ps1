@@ -199,7 +199,7 @@ foreach ($groupIndex in 1..$Groups) {
     # all parts are deployed using same routine.
     # Multiple containers are very usefull since it helps to optimize load generator per
     # group. For example in case of selenium even 1CPU/1GB is overkill and it can run multiple instances concurrently.
-    RunArm (Resolve-Path ./arm/container-group.json) -parameters @{
+    RunArm (Resolve-Path $PSScriptRoot/arm/container-group.json) -parameters @{
         groupIndex       = @{ value = $groupIndex };
         containerCount   = @{ value = $ContainerPerGroup };
         containerImage   = @{ value = $fullTemporaryImageName };
