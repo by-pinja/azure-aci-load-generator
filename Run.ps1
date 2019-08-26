@@ -64,16 +64,16 @@ Param(
     # is calculated container_count*cpu. For example 3 containers with 1 cpu = 3 cpus.
     # See exact limits https://docs.microsoft.com/bs-latn-ba/azure/container-instances/container-instances-region-availability?view=azuremgmtcdn-fluent-1.0.0#availability---general
     [Parameter()]
-    [ValidateRange(1, 4)]
-    [int]
+    [ValidateRange(0.1, 4)]
+    [decimal]
     $CpusPerContainer = 1,
 
     # Memory per container. It's important to notice that the total capacity neededed for group
     # is calculated container_count*memory. For example 3 containers with 1 GB each = 3 GB.
     # See exact limits https://docs.microsoft.com/bs-latn-ba/azure/container-instances/container-instances-region-availability?view=azuremgmtcdn-fluent-1.0.0#availability---general
     [Parameter()]
-    [ValidateRange(1, 16)]
-    [int]
+    [ValidateRange(0.1, 16)]
+    [decimal]
     $MemoryPerContainerGb = 1,
 
     # Desired geo-location of resource group.
@@ -88,6 +88,7 @@ $ErrorActionPreference = "Stop"
 $PSDefaultParameterValues['*:ErrorAction'] = 'Stop'
 
 $runId = [System.Guid]::NewGuid().ToString().Replace("-", "")
+
 $resourceGroup = "load-generator-$($runId)"
 $imageTemporaryName = "load-generator-image-$($runId)"
 
@@ -198,15 +199,15 @@ foreach ($groupIndex in 1..$Groups) {
     # all parts are deployed using same routine.
     # Multiple containers are very usefull since it helps to optimize load generator per
     # group. For example in case of selenium even 1CPU/1GB is overkill and it can run multiple instances concurrently.
-    RunArm (Resolve-Path $PSScriptRoot/arm/container-group.json) -parameters @{
+    RunArm (Resolve-Path ./arm/container-group.json) -parameters @{
         groupIndex       = @{ value = $groupIndex };
         containerCount   = @{ value = $ContainerPerGroup };
         containerImage   = @{ value = $fullTemporaryImageName };
         registryServer   = @{ value = $adhocRegistry.LoginServer };
         registryUsername = @{ value = $creds.Username };
         registryPassword = @{ value = $creds.Password };
-        cpus             = @{ value = $CpusPerContainer };
-        memoryGb         = @{ value = $MemoryPerContainerGb };
+        cpus             = @{ value = $CpusPerContainer.ToString("f", [CultureInfo]::InvariantCulture) };
+        memoryGb         = @{ value = $MemoryPerContainerGb.ToString("f", [CultureInfo]::InvariantCulture) };
     } | Out-Null
 }
 
