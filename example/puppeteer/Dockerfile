@@ -17,14 +17,6 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 ENV CHROME_PATH=/usr/bin/chromium-browser
 ENV CHROME_HEADLESS=1
 
-# RUN addgroup -S pptruser && adduser -S -g pptruser pptruser \
-#     && mkdir -p /home/pptruser/Downloads /app \
-#     && chown -R pptruser:pptruser /home/pptruser \
-#     && chown -R pptruser:pptruser /app
-
-# # Run everything after as non-privileged user.
-# USER pptruser
-
 COPY ./ /src/
 
 WORKDIR /src/
