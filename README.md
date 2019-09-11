@@ -34,10 +34,10 @@ Get-Help ./Run.ps1 -Full
 
 ## Example
 
-Create suitable docker image for load generator (this repository contains few examples, we use cypress image here.)
+Create suitable docker image for load generator (this repository contains few examples, we use puppeteer image here.)
 
 ```powershell
-docker build ./example/ -t cypress-load
+docker build ./example/puppeteer -t puppeteer-load
 ```
 
 Login to Azure and run tool
@@ -47,10 +47,10 @@ You can check your current context with `Get-AzContext` and resources in there w
 
 ```powershell
 Connect-AzAccount
-./Run.ps1 -Image "cypress-load" -TTLInMinutes 30 -Groups 3 -ContainerPerGroup 3
+./Run.ps1 -Image "puppeteer-load" -TTLInMinutes 30 -Groups 3 -ContainerPerGroup 3
 ```
 
-Now you have array of `cypress-load` containers generating load that lives for 30 minutes.
+Now you have array of `puppeteer-load` containers generating load that lives for 30 minutes.
 
 ![alt text](./img/generated-resources.png "Created resources that executes load")
 

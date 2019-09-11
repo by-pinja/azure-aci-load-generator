@@ -76,6 +76,12 @@ Param(
     [decimal]
     $MemoryPerContainerGb = 1,
 
+    # Theres may be policies in targeted environment that enforces certain metadata customer/project names etc or you maybe just want to add information about test run to
+    # resource group metada.
+    [Parameter()]
+    [hashtable]
+    $Tags = @{},
+
     # Desired geo-location of resource group.
     [Parameter()]
     [ValidateNotNullOrEmpty()]
@@ -160,7 +166,10 @@ if ($confirmation.ToLower() -ne "y") {
 
 Write-Host "Creating resource group $resourceGroup" -ForegroundColor Green
 
-New-AzResourceGroup -Name $resourceGroup -Location $Location -Tag @{Created=([datetime]::UtcNow.ToString("o")); TTLMinutes=($TTLInMinutes)} | Out-Null
+$Tags["Created"] = ([datetime]::UtcNow.ToString("o"))
+$Tags["TTLMinutes"] = $TTLInMinutes
+
+New-AzResourceGroup -Name $resourceGroup -Location $Location -Tags $Tags | Out-Null
 
 Write-Host "Creating automatic tear down function for resource group, triggers after $TTLInMinutes minutes (TTLInMinutes)." -ForegroundColor Green
 
