@@ -1,5 +1,7 @@
 # Azure ACI load generator
 
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 It is common issue that in other hand load testing can give great value
 and in other hand it's often very expensive and time consuming to setup.
 This repository tries to solve that issue in generic way by using Azure
@@ -66,3 +68,9 @@ One example is to use [Azure Application Insights](https://docs.microsoft.com/en
 during tests. Many tools have monitoring tools for speed built in like in JMeter
 or k6s.io, however collecting results that way is left to built to container and is out
 of scope of this repository.
+
+## License
+
+[The MIT License (MIT)](LICENSE)
+Copyright (c) 2019 Protacon
+
